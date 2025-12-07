@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Icon } from './Icon';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
               VisuLab
             </h1>
           </div>
-          
+
           <div className="hidden lg:flex items-center bg-slate-100/80 rounded-full p-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -39,11 +39,10 @@ const Navbar: React.FC = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    isActive
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${isActive
                       ? 'bg-slate-900 text-white shadow-sm font-semibold'
                       : 'text-slate-500 hover:text-slate-900'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </NavLink>
@@ -61,11 +60,11 @@ const Navbar: React.FC = () => {
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
           </button>
           <div className="flex items-center gap-3 pl-2 ml-1">
-            <div 
-              className="h-10 w-10 rounded-full bg-slate-200 bg-center bg-cover border-2 border-white shadow-sm" 
+            <div
+              className="h-10 w-10 rounded-full bg-slate-200 bg-center bg-cover border-2 border-white shadow-sm"
               style={{ backgroundImage: 'url("https://picsum.photos/200")' }}
             ></div>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 text-slate-600 transition-colors"
               title="Logout"
@@ -76,34 +75,33 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </nav>
-      
+
       {/* Mobile Navigation */}
       <div className="lg:hidden mt-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
-             {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-slate-900 text-white shadow-sm'
-                        : 'bg-white text-slate-600 border border-slate-100'
-                    }`}
-                  >
-                    {item.name}
-                  </NavLink>
-                );
-              })}
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'bg-white text-slate-600 border border-slate-100'
+                  }`}
+              >
+                {item.name}
+              </NavLink>
+            );
+          })}
+        </div>
+        {/* Subtle Mobile Scroll Indicator */}
+        <div className="flex justify-end pr-4 -mt-1">
+          <div className="flex items-center gap-1 text-[10px] font-bold text-slate-300 uppercase tracking-wider animate-pulse">
+            <span>Mais</span>
+            <Icon name="arrow_forward" className="!text-xs" />
           </div>
-          {/* Subtle Mobile Scroll Indicator */}
-          <div className="flex justify-end pr-4 -mt-1">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-300 uppercase tracking-wider animate-pulse">
-               <span>Mais</span>
-               <Icon name="arrow_forward" className="!text-xs" />
-            </div>
-          </div>
+        </div>
       </div>
     </div>
   );

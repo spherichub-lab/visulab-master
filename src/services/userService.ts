@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabaseClient';
 import { User } from '../../types';
 
 interface Company {
@@ -18,12 +18,12 @@ export const userService = {
     const { data, error } = await supabase
       .from('companies')
       .select('id, name');
-    
+
     if (error) {
       console.error('Error fetching companies:', error);
       throw new Error('Failed to fetch companies');
     }
-    
+
     return data || [];
   },
 
