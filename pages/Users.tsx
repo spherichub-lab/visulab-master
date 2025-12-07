@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
-import { User } from '../types';
+import { User, Company } from '../types';
 import { userService } from '../src/services/userService';
 
 const Users: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [companies, setCompanies] = useState<{ id: string, name: string }[]>([]);
-  const [newUser, setNewUser] = useState({ fullName: '', companyId: '' });
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [newUser, setNewUser] = useState({ fullName: '', companyId: '', role: 'User' });
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -72,15 +72,20 @@ const Users: React.FC = () => {
       const selectedCompany = companies.find(c => c.id === newUser.companyId);
       if (!selectedCompany) throw new Error('Company not found');
 
+      const form = e.target as HTMLFormElement;
+      const passwordInput = form.elements.namedItem('password') as HTMLInputElement;
+      const password = passwordInput.value;
+
       await userService.createUser({
         fullName: newUser.fullName,
         companyId: newUser.companyId,
-        companyName: selectedCompany.name
+        companyName: selectedCompany.name,
+        password: password
       });
 
       await fetchUsers();
       setIsModalOpen(false);
-      setNewUser({ fullName: '', companyId: companies[0]?.id || '' });
+      setNewUser({ fullName: '', companyId: companies[0]?.id || '', role: 'User' });
     } catch (err: any) {
       setError(err.message || 'Failed to create user');
     } finally {
@@ -88,9 +93,15 @@ const Users: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
-      setUsers(users.filter(u => u.id !== id));
+      try {
+        await userService.deleteUser(id);
+        setUsers(users.filter(u => u.id !== id));
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        alert('Failed to delete user');
+      }
     }
   };
 
@@ -103,7 +114,7 @@ const Users: React.FC = () => {
           <p className="text-slate-500 mt-1 text-sm">Administre membros da equipe, funções e permissões de acesso.</p>
         </div>
         <div className="w-full lg:w-auto grid grid-cols-3 gap-3 md:flex md:gap-4">
-          {/* Metric Cards - Grid on mobile for better fit */}
+          {/* Metric Cards */}
           {[
             { label: 'Total', value: users.length.toString(), icon: 'group', color: 'text-primary', bg: 'bg-blue-50' },
             { label: 'Ativos', value: users.filter(u => u.status === 'Active').length.toString(), icon: 'verified_user', color: 'text-accent-green', bg: 'bg-green-50' },
@@ -122,7 +133,7 @@ const Users: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content Area - functional, no hover effect */}
+      {/* Main Content Area */}
       <div className="flex-1 bg-white rounded-3xl shadow-soft border border-slate-100 flex flex-col overflow-hidden">
         {/* Toolbar */}
         <div className="flex-none flex flex-col md:flex-row justify-between items-center p-4 md:p-6 gap-4 border-b border-slate-50">
@@ -185,8 +196,8 @@ const Users: React.FC = () => {
                     </td>
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-1.5 text-slate-600">
-                        <Icon name={user.role === 'Administrator' ? 'admin_panel_settings' : user.role === 'Viewer' ? 'person_outline' : 'person'}
-                          className={`!text-lg ${user.role === 'Administrator' ? 'text-accent-purple' : user.role === 'Viewer' ? 'text-slate-400' : 'text-primary'}`} />
+                        <Icon name={user.role === 'Admin' ? 'admin_panel_settings' : user.role === 'Viewer' ? 'person_outline' : 'person'}
+                          className={`!text-lg ${user.role === 'Admin' ? 'text-accent-purple' : user.role === 'Viewer' ? 'text-slate-400' : 'text-primary'}`} />
                         <span>{user.role}</span>
                       </div>
                     </td>
@@ -207,11 +218,6 @@ const Users: React.FC = () => {
                         >
                           <Icon name={user.status === 'Pending' ? 'close' : 'delete'} className="!text-lg" />
                         </button>
-                        {user.status === 'Pending' && (
-                          <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white text-slate-400 hover:text-primary hover:shadow-sm transition-all border border-transparent hover:border-slate-200">
-                            <Icon name="check" className="!text-lg" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -265,6 +271,19 @@ const Users: React.FC = () => {
             </select>
           </div>
           <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipo</label>
+            <select
+              name="role"
+              value={newUser.role}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl text-base md:text-sm focus:ring-2 focus:ring-primary/50"
+              required
+            >
+              <option value="User">Usuário</option>
+              <option value="Admin">Administrador</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email (Gerado Automaticamente)</label>
             <input
               type="email"
@@ -273,6 +292,17 @@ const Users: React.FC = () => {
               className="w-full px-4 py-2.5 bg-slate-100 border-none rounded-xl text-base md:text-sm text-slate-500"
               placeholder="ex: joao@visulab.com"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha</label>
+            <input
+              type="text"
+              name="password"
+              defaultValue="123456"
+              className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl text-base md:text-sm focus:ring-2 focus:ring-primary/50"
+              placeholder="123456"
+            />
+            <p className="text-xs text-slate-400 mt-1">Senha padrão: 123456</p>
           </div>
 
           <div className="pt-4 flex gap-3">
